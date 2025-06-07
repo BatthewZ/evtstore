@@ -74,6 +74,7 @@ export type Provider<Evt extends Event> = {
     aggregateId: string,
     fromPosition?: any
   ): Promise<Array<StoreEvent<Evt>>>
+  getBatchEventsFor(stream: string, aggregateIds: string[]): Promise<Array<StoreEvent<Evt>>>
   getLastEventFor(
     stream: string | string[],
     aggregateId?: string
@@ -136,6 +137,9 @@ export type Domain<E extends Event, A extends Aggregate, C extends Command> = {
   getAggregate(
     id: string
   ): Promise<ExecutableAggregate<C, A> & { aggregate: Readonly<A & BaseAggregate> }>
+  // getAggregates(
+  //   ids: string[]
+  // ): Promise<Array<Array<ExecutableAggregate<C, A> & { aggregate: Readonly<A & BaseAggregate> }>>>
   retry?: boolean
 }
 
@@ -174,7 +178,7 @@ export type ProvidedAggregate<E extends Event, A extends Aggregate, S extends st
   provider: Provider<E> | Promise<Provider<E>>
   getAggregate: (id: string) => Promise<A & BaseAggregate>
   toNextAggregate: (prev: A & BaseAggregate, event: StoreEvent<E>) => A & BaseAggregate
-
+  getAggregates: (ids: string[]) => Promise<(A & BaseAggregate)[]>
   version?: string
   persistAggregate?: boolean
 }

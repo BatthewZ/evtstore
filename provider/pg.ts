@@ -101,6 +101,16 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
       const result = await opts.client.query(q, values)
       return result.rows.map(mapToEvent)
     },
+    getBatchEventsFor: async (stream, aggregateIds) => {
+      const placeholders = aggregateIds.map((_, i) => `$${i + 2}`).join(', ')
+      let query = `select * from "${opts.events}" where stream = $1 and aggregate_id in (${placeholders})`
+      const values = [stream, ...aggregateIds]
+
+      query += ` order by timestamp, version asc`
+
+      const result = await opts.client.query(query, values)
+      return result.rows.map(mapToEvent)
+    },
     createEvents: createEventsMapper<E>(0),
     append: async (_stream, _aggregateId, _version, newEvents) => {
       const trx = await opts.client.connect()

@@ -74,7 +74,42 @@ export function createProvidedAggregate<E extends Event, A extends Aggregate>(
     }
   }
 
-  return { stream: opts.stream, getAggregate, toNextAggregate, provider: opts.provider }
+  async function getAggregates(ids: string[]) {
+    const events = await (await opts.provider).getBatchEventsFor(opts.stream, ids)
+
+    const aggMap = new Map<string, A & BaseAggregate>()
+
+    for (const id of ids) {
+      aggMap.set(id, { ...opts.aggregate(), aggregateId: id, version: 0 })
+    }
+
+    for (const ev of events) {
+      const agg = aggMap.get(ev.aggregateId)
+
+      if (agg) {
+        aggMap.set(ev.aggregateId, toNextAggregate(agg, ev))
+      }
+    }
+
+    const aggregates: (A & BaseAggregate)[] = []
+
+    for (const id of ids) {
+      const agg = aggMap.get(id)
+      if (agg) {
+        aggregates.push(agg)
+      }
+    }
+
+    return aggregates
+  }
+
+  return {
+    stream: opts.stream,
+    getAggregate,
+    getAggregates,
+    toNextAggregate,
+    provider: opts.provider,
+  }
 }
 
 export function createPersistedAggregate<E extends Event, A extends Aggregate>(
@@ -147,9 +182,39 @@ export function createPersistedAggregate<E extends Event, A extends Aggregate>(
     }
   }
 
+  async function getAggregates(ids: string[]) {
+    const events = await (await opts.provider).getBatchEventsFor(opts.stream, ids)
+
+    const aggMap = new Map<string, A & BaseAggregate>()
+
+    for (const id of ids) {
+      aggMap.set(id, { ...opts.aggregate(), aggregateId: id, version: 0 })
+    }
+
+    for (const ev of events) {
+      const agg = aggMap.get(ev.aggregateId)
+
+      if (agg) {
+        aggMap.set(ev.aggregateId, toNextAggregate(agg, ev))
+      }
+    }
+
+    const aggregates: (A & BaseAggregate)[] = []
+
+    for (const id of ids) {
+      const agg = aggMap.get(id)
+      if (agg) {
+        aggregates.push(agg)
+      }
+    }
+
+    return aggregates
+  }
+
   return {
     stream: opts.stream,
     getAggregate: getPersistedAggregate,
+    getAggregates,
     toNextAggregate,
     provider: opts.provider,
     version: opts.version,
