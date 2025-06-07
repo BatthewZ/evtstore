@@ -77,6 +77,15 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
 
       return result.map(mapToEvent)
     },
+    getBatchEventsFor: async (stream, aggregateIds) => {
+      const result = await sql`SELECT * FROM ${sql(evts)}
+        WHERE stream = ${stream}
+        AND aggregate_id IN ${sql(aggregateIds)}
+        ORDER BY timestamp, version asc
+      `
+
+      return result.map(mapToEvent)
+    },
     createEvents: createEventsMapper<E>(0),
     append: async (_stream, _aggregateId, _version, newEvents) => {
       try {
