@@ -285,6 +285,26 @@ describe('provider tests', () => {
         const agg = await domainv2.providedAgg('v3').getAggregate('persisted')
         expect(agg.__pv).to.be.undefined
       })
+
+      it('will get batch aggregates', async () => {
+        const ids = ['id1', 'id2', 'id3']
+
+        for (const id of ids) {
+          await domainv2.cmd.doOne(id, { one: 1 })
+          await domainv2.cmd.doTwo(id, { two: '2' })
+          await domainv2.cmd.doThree(id, { three: [3] })
+        }
+
+        const aggs = await domainv2.domain.example.getAggregates(ids)
+
+        for (const agg of aggs) {
+          expect(ids.includes(agg.aggregateId)).to.equal(true)
+          expect(agg.version).to.equal(3)
+          expect(agg.one).to.equal(1)
+          expect(agg.two).to.equal('2')
+          expect(agg.three).to.equal([3])
+        }
+      })
     })
   }
 })
