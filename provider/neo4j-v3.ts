@@ -132,6 +132,30 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
 
       return parsed
     },
+    getBatchEventsFor: async (stream, aggregateIds) => {
+      const params: any = { stream, aggregateIds }
+
+      const query = `
+        MATCH (ev: ${opts.events})
+        WHERE ev.stream = $stream
+        AND ev.aggregateId IN $aggregateIds
+        RETURN ev
+        ORDER BY ev.timestamp ASC, ev.version ASC
+      `
+
+      const events = await run<any>(query, params)
+
+      const parsed = events.map((ev) => ({
+        stream: ev.stream,
+        position: toInternalPosition(ev.position),
+        version: toVersion(ev.version),
+        timestamp: new Date(ev.timestamp),
+        aggregateId: ev.aggregateId,
+        event: JSON.parse(ev.event),
+      }))
+
+      return parsed
+    },
     createEvents: createEventsMapper<E>(0),
     append: async (stream, id, _version, newEvents) => {
       const client = await opts.client

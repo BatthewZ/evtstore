@@ -41,6 +41,10 @@ export function createProvider<E extends Event>(
     return events.filter(filter)
   }
 
+  const getBatchEventsFor = async (stream: string, aggregateIds: string[]) => {
+    return events.filter((ev) => ev.stream === stream && aggregateIds.includes(ev.aggregateId))
+  }
+
   const createEvents = createEventsMapper<E>(0)
 
   const append = async (
@@ -71,6 +75,7 @@ export function createProvider<E extends Event>(
     getEventsFor,
     getEventsFrom,
     getLastEventFor,
+    getBatchEventsFor,
     createEvents,
     append,
   }

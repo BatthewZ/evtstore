@@ -76,6 +76,17 @@ export function createProvider<E extends Event>(opts: Options<E>): Provider<E> {
         return query.toArray()
       }),
 
+    getBatchEventsFor: async (stream, ids) => {
+      const query = {
+        stream,
+        aggregateId: { $in: ids },
+      } as unknown as Filter<StoreEvent<E>>
+
+      const results = await events.then((coll) => coll.find(query).sort({ position: 1 }).toArray())
+
+      return results
+    },
+
     createEvents,
 
     append: async (_stream, _aggId, _version, newEvents) => {

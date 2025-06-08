@@ -87,6 +87,21 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
 
       return events.map(mapToEvent)
     },
+    getBatchEventsFor: async (stream, aggregateIds) => {
+      const query = opts
+        .events()
+        .select()
+        .whereIn('aggregate_id', toArray(aggregateIds))
+        .andWhere('stream', stream)
+        .orderBy([
+          { column: 'timestamp', order: 'asc' },
+          { column: 'version', order: 'asc' },
+        ])
+
+      const events = await query
+
+      return events.map(mapToEvent)
+    },
     createEvents: createEventsMapper<E>(0),
     append: async (_stream, _aggregateId, _version, newEvents) => {
       try {
