@@ -302,7 +302,7 @@ describe('provider tests', () => {
           expect(agg.version).to.equal(3)
           expect(agg.one).to.equal(1)
           expect(agg.two).to.equal('2')
-          expect(agg.three).to.equal([3])
+          expect(agg.three[0]).to.equal(3)
         }
       })
     })
