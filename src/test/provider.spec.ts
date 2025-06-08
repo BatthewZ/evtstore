@@ -297,6 +297,8 @@ describe('provider tests', () => {
 
         const aggs = await domainv2.domain.example.getAggregates(ids)
 
+        expect(aggs.length).to.equal(3)
+
         for (const agg of aggs) {
           expect(ids.includes(agg.aggregateId)).to.equal(true)
           expect(agg.version).to.equal(3)
