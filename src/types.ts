@@ -137,9 +137,9 @@ export type Domain<E extends Event, A extends Aggregate, C extends Command> = {
   getAggregate(
     id: string
   ): Promise<ExecutableAggregate<C, A> & { aggregate: Readonly<A & BaseAggregate> }>
-  getAggregates(
-    ids: string[]
-  ): Promise<Array<Array<ExecutableAggregate<C, A> & { aggregate: Readonly<A & BaseAggregate> }>>>
+  // getAggregates(
+  //   ids: string[]
+  // ): Promise<Array<Array<ExecutableAggregate<C, A> & { aggregate: Readonly<A & BaseAggregate> }>>>
   retry?: boolean
 }
 
