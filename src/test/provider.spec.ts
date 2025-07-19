@@ -37,6 +37,42 @@ describe('provider tests', () => {
         match({ one: 84, version: 2 }, actual)
       })
 
+      it('will get batch aggregates', async () => {
+        await domain.command.doOne('id1', { one: 1 })
+        await domain.command.doTwo('id1', { two: 'two' })
+        await domain.command.doThree('id1', { three: [3] })
+
+        await domain.command.doOne('id2', { one: 100 })
+        await domain.command.doTwo('id2', { two: 'number two' })
+
+        await domain.command.doOne('id3', { one: 111 })
+        await domain.command.doThree('id3', { three: [333] })
+
+        const aggs = await domainv2.domain.example.getAggregates(['id2', 'id1', 'id3'])
+
+        expect(aggs.length).to.equal(3)
+
+        const [aggWithId2, aggWIthId1, aggWithId3] = aggs
+
+        expect(aggWIthId1.aggregateId).to.equal('id1')
+        expect(aggWIthId1.version).to.equal(3)
+        expect(aggWIthId1.one).to.equal(1)
+        expect(aggWIthId1.two).to.equal('two')
+        expect(aggWIthId1.three[0]).to.equal(3)
+
+        expect(aggWithId2.aggregateId).to.equal('id2')
+        expect(aggWithId2.version).to.equal(2)
+        expect(aggWithId2.one).to.equal(100)
+        expect(aggWithId2.two).to.equal('number two')
+        expect(aggWithId2.three[0]).to.be.undefined
+
+        expect(aggWithId3.aggregateId).to.equal('id3')
+        expect(aggWithId3.version).to.equal(2)
+        expect(aggWithId3.one).to.equal(111)
+        expect(aggWithId3.two).to.equal('')
+        expect(aggWithId3.three[0]).to.equal(333)
+      })
+
       it('will correctly update model using event handler', async () => {
         await domain.populator.runOnce()
         const actual = domain.models.get('one')
@@ -120,12 +156,12 @@ describe('provider tests', () => {
           ++count
         })
         await pop.runOnce()
-        expect(count).to.equal(6)
+        expect(count).to.equal(9)
         await pop.runOnce()
-        expect(count).to.equal(6)
+        expect(count).to.equal(9)
         await domain.command.doOne('in-memory', { one: 1 })
         await pop.runOnce()
-        expect(count).to.equal(7)
+        expect(count).to.equal(10)
       })
 
       it('will correctly handle multiple streams in a single handler', async () => {
@@ -284,28 +320,6 @@ describe('provider tests', () => {
       it('will not hydrate the aggregate when a version mismatch occurs', async () => {
         const agg = await domainv2.providedAgg('v3').getAggregate('persisted')
         expect(agg.__pv).to.be.undefined
-      })
-
-      it('will get batch aggregates', async () => {
-        const ids = ['id1', 'id2', 'id3']
-
-        for (const id of ids) {
-          await domainv2.cmd.doOne(id, { one: 1 })
-          await domainv2.cmd.doTwo(id, { two: '2' })
-          await domainv2.cmd.doThree(id, { three: [3] })
-        }
-
-        const aggs = await domainv2.domain.example.getAggregates(ids)
-
-        expect(aggs.length).to.equal(3)
-
-        for (const agg of aggs) {
-          expect(ids.includes(agg.aggregateId)).to.equal(true)
-          expect(agg.version).to.equal(3)
-          expect(agg.one).to.equal(1)
-          expect(agg.two).to.equal('2')
-          expect(agg.three[0]).to.equal(3)
-        }
       })
     })
   }
