@@ -49,9 +49,9 @@ describe('provider tests', () => {
         await domain.command.doThree('id3', { three: [333] })
 
         const aggs = await domain.getAggregates(['id2', 'id1', 'id3'])
-
         expect(aggs.length).to.equal(3)
 
+        // Intentionally out of order.
         const [aggWithId2, aggWithId1, aggWithId3] = aggs
 
         match({ aggregateId: 'id1', one: 1, two: 'two', version: 3 }, aggWithId1.aggregate)
