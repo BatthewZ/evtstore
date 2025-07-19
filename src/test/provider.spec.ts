@@ -48,29 +48,20 @@ describe('provider tests', () => {
         await domain.command.doOne('id3', { one: 111 })
         await domain.command.doThree('id3', { three: [333] })
 
-        const aggs = await domainv2.domain.example.getAggregates(['id2', 'id1', 'id3'])
+        const aggs = await domain.getAggregates(['id2', 'id1', 'id3'])
 
         expect(aggs.length).to.equal(3)
 
-        const [aggWithId2, aggWIthId1, aggWithId3] = aggs
+        const [aggWithId2, aggWithId1, aggWithId3] = aggs
 
-        expect(aggWIthId1.aggregateId).to.equal('id1')
-        expect(aggWIthId1.version).to.equal(3)
-        expect(aggWIthId1.one).to.equal(1)
-        expect(aggWIthId1.two).to.equal('two')
-        expect(aggWIthId1.three[0]).to.equal(3)
+        match({ aggregateId: 'id1', one: 1, two: 'two', version: 3 }, aggWithId1.aggregate)
+        expect(aggWithId1.aggregate.three[0]).to.equal(3)
 
-        expect(aggWithId2.aggregateId).to.equal('id2')
-        expect(aggWithId2.version).to.equal(2)
-        expect(aggWithId2.one).to.equal(100)
-        expect(aggWithId2.two).to.equal('number two')
-        expect(aggWithId2.three[0]).to.be.undefined
+        match({ aggregateId: 'id2', one: 100, two: 'number two', version: 2 }, aggWithId2.aggregate)
+        expect(aggWithId2.aggregate.three[0]).to.be.undefined
 
-        expect(aggWithId3.aggregateId).to.equal('id3')
-        expect(aggWithId3.version).to.equal(2)
-        expect(aggWithId3.one).to.equal(111)
-        expect(aggWithId3.two).to.equal('')
-        expect(aggWithId3.three[0]).to.equal(333)
+        match({ aggregateId: 'id3', one: 111, two: '', version: 2 }, aggWithId3.aggregate)
+        expect(aggWithId3.aggregate.three[0]).to.equal(333)
       })
 
       it('will correctly update model using event handler', async () => {

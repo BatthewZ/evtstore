@@ -44,7 +44,7 @@ function wrapCmd<E extends Event, A extends Aggregate, C extends Command>(
     throw new Error(`Invalid command body: Command handler function cannot be named "aggregate"`)
   }
 
-  const { getAggregate, toNextAggregate } = createProvidedAggregate<E, A>(opts)
+  const { getAggregate, toNextAggregate, getAggregates } = createProvidedAggregate<E, A>(opts)
 
   async function getExecAggregate(id: string) {
     const aggregate = await getAggregate(id)
@@ -63,6 +63,31 @@ function wrapCmd<E extends Event, A extends Aggregate, C extends Command>(
     }
 
     return { ...body, aggregate }
+  }
+
+  async function getExecAggregates(ids: string[]) {
+    const aggregates = await getAggregates(ids)
+
+    const bodies: Array<ExecutableAggregate<C, A> & { aggregate: A & BaseAggregate }> = []
+
+    for (const aggregate of aggregates) {
+      const body: ExecutableAggregate<C, A> = {} as any
+
+      for (const command of commands) {
+        body[command] = async (cmdBody) => {
+          const cmdResult = await handler[command](
+            { ...cmdBody, aggregateId: aggregate.aggregateId, type: command },
+            aggregate
+          )
+          const nextAggregate = await handleCommandResult(cmdResult, aggregate)
+
+          return { ...body, aggregate: nextAggregate }
+        }
+      }
+      bodies.push({ ...body, aggregate })
+    }
+
+    return bodies
   }
 
   // Prepare the command handlers that accept an aggregateId and a command body
@@ -94,5 +119,5 @@ function wrapCmd<E extends Event, A extends Aggregate, C extends Command>(
     return nextAggregate
   }
 
-  return { command: wrapped, getAggregate: getExecAggregate }
+  return { command: wrapped, getAggregate: getExecAggregate, getAggregates: getExecAggregates }
 }
