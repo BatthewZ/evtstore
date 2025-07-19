@@ -60,7 +60,7 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
     getLastEventFor: async (stream, aggregateId) => {
       const streams = Array.isArray(stream) ? stream : [stream]
       const agg = aggregateId ? sql`AND aggregate_id = ${aggregateId}` : sql``
-      const result = await sql`select * from ${sql(evts)} where stream in (${sql(
+      const result = await sql`select * from ${sql(evts)} WHERE stream = ANY(${sql.array(
         streams
       )}) ${agg} order by position desc limit 1`
 
@@ -71,9 +71,9 @@ export function createProvider<E extends Event>(opts: Options): Provider<E> {
       const limit = lim ?? opts.limit
       const limitClause = limit ? sql`LIMIT ${limit}` : sql``
 
-      const result = await sql`SELECT * FROM ${sql(evts)} WHERE stream IN ${sql(
+      const result = await sql`SELECT * FROM ${sql(evts)} WHERE stream = ANY(${sql.array(
         streams
-      )} AND position > ${position} ORDER BY position ASC ${limitClause}`
+      )}) AND position > ${position} ORDER BY position ASC ${limitClause}`
 
       return result.map(mapToEvent)
     },
